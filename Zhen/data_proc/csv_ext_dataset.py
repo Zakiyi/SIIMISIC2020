@@ -33,7 +33,7 @@ class CSV_Ext_Dataset(Dataset):
                 self.images = np.concatenate([self.images, ext_images])
                 self.labels = np.concatenate([self.labels, ext_labels])  # 26033: 6447
 
-                self.images, self.labels = self.copy_img_for_balance(self.images, self.labels)
+            self.images, self.labels = self.copy_img_for_balance(self.images, self.labels)
 
             # print(np.unique(self.labels))
         else:
