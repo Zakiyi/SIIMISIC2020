@@ -13,7 +13,7 @@ from data_proc.augment import Augmentations
 
 
 class CSV_Ext_Dataset(Dataset):
-    def __init__(self, data_csv, data_root, ext_csv=None, is_train=True, transform=None, fold=0):
+    def __init__(self, data_csv, data_root, ext_csv=None, is_train=True, transform=None, fold=0, test_csv=None):
         super(CSV_Ext_Dataset, self).__init__()
 
         self.n_class = 1
@@ -33,8 +33,14 @@ class CSV_Ext_Dataset(Dataset):
                 self.images = np.concatenate([self.images, ext_images])
                 self.labels = np.concatenate([self.labels, ext_labels])  # 26033: 6447
 
-            self.images, self.labels = self.copy_img_for_balance(self.images, self.labels)
+            if test_csv is not None:
+                print('we are using test data')
+                ext_images, ext_labels = self.add_ext_images(test_csv)
+                self.images = np.concatenate([self.images, ext_images])
+                self.labels = np.concatenate([self.labels, ext_labels])  # 26033: 6447
 
+            self.images, self.labels = self.copy_img_for_balance(self.images, self.labels)
+            print(len(self.labels))
             # print(np.unique(self.labels))
         else:
             self.images = self.samples['val_images']
@@ -51,6 +57,9 @@ class CSV_Ext_Dataset(Dataset):
         unique_labels, counts = np.unique(labels, return_counts=True)
         assert len(unique_labels) == 2
         assert len(images) == len(labels)
+        # print('count ', counts[0], counts[1])
+        # print('benign ', len(images[labels == unique_labels[0]]))
+        # print('malignant ', len(images[labels == unique_labels[1]]))
 
         new_images = []
         new_labels = []
@@ -108,9 +117,7 @@ class CSV_Ext_Dataset(Dataset):
         # print(self.images[idx])
         # print(self.labels[idx])
         # # load data
-
         img = PIL.Image.open(self.images[idx])
-
         img = self.transform(img)
 
         if self.labels[idx] == 'benign':
@@ -119,7 +126,6 @@ class CSV_Ext_Dataset(Dataset):
             label = 1
         else:
             raise ValueError
-
         label = torch.tensor(label)   # dtype = torch.int64
         return {'image': img, 'target': label}
 
@@ -139,8 +145,8 @@ if __name__ == '__main__':
                                   'normalization': {'mean': (0.485, 0.456, 0.406),
                                                     'std': (0.229, 0.224, 0.225)},
                                   'size': 320,
-                                  'scale': (0.7, 1.3),
-                                  'ratio': (0.7, 1.3)
+                                  'scale': (0.75, 1.25),
+                                  'ratio': (0.75, 1.25)
                                   }
                                  )
 
@@ -171,4 +177,3 @@ if __name__ == '__main__':
     # # img.show()
     # # print(train_list[idx])
     # plt.show()
-
